@@ -9,7 +9,7 @@ A simple ticket management system.
 1. **Clone the repository**
 
     ```bash
-    git clone https://github.com/your-username/your-repo.git
+    git clone https://github.com/EricWhooo/database_project_2025_spring.git
     cd your-repo
     ```
 
@@ -24,11 +24,7 @@ A simple ticket management system.
 ## Database Setup
 
 - Make sure you have a local database server running.
-- Create a database named `ticket_sys` before running the app.
-
-    ```sql
-    CREATE DATABASE ticket_sys;
-    ```
+- Make sure you have the correct *air_ticket* database named `ticket_sys` before running the app.
 
 ---
 
