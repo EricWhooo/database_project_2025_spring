@@ -1,0 +1,8 @@
+<!-- File: templates/agent_view_commission.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>My Commission</h2>
+<p>Total commission in the past 30 days: {{ total_commission }}</p>
+<p>Total tickets: {{ ticket_count }}</p>
+<p>Average commission: {{ average_commission }}</p>
+{% endblock %}

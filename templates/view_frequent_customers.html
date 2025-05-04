@@ -1,0 +1,25 @@
+<!-- File: templates/view_frequent_customers.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Frequent Customers</h2>
+{% if frequent_customers %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Customer Email</th>
+        <th>Ticket Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cust in frequent_customers %}
+        <tr>
+          <td>{{ cust.customer_email }}</td>
+          <td>{{ cust.ticket_count }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>No frequent customer data available.</p>
+{% endif %}
+{% endblock %}

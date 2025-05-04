@@ -1,0 +1,23 @@
+<!-- File: templates/view_reports.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Sales Report</h2>
+<p>Total Tickets Sold: {{ reports.total_tickets }}</p>
+<h3>Monthly Statistics</h3>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Month</th>
+      <th>Tickets Sold</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in reports.monthly %}
+      <tr>
+        <td>{{ item.month }}</td>
+        <td>{{ item.tickets_sold }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

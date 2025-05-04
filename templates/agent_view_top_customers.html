@@ -1,0 +1,39 @@
+<!-- File: templates/agent_view_top_customers.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Top Customers</h2>
+<h3>By Ticket Count</h3>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Customer Email</th>
+      <th>Ticket Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for cust in top_customers_by_tickets %}
+      <tr>
+        <td>{{ cust.customer_email }}</td>
+        <td>{{ cust.ticket_count }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<h3>By Commission Amount</h3>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Customer Email</th>
+      <th>Commission</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for cust in top_customers_by_commission %}
+      <tr>
+        <td>{{ cust.customer_email }}</td>
+        <td>{{ cust.total_commission }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

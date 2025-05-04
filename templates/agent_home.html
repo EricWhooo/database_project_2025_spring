@@ -1,0 +1,12 @@
+<!-- File: templates/agent_home.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Booking Agent Home</h2>
+<ul>
+  <li><a href="{{ url_for('agent.my_flights') }}">View My Flights</a></li>
+  <li><a href="{{ url_for('agent.purchase_ticket') }}">Agent Purchase Ticket</a></li>
+  <li><a href="{{ url_for('agent.view_commission') }}">View Commission</a></li>
+  <li><a href="{{ url_for('agent.view_top_customers') }}">View Top Customers</a></li>
+  <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+</ul>
+{% endblock %}

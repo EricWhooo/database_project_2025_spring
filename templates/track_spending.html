@@ -1,0 +1,12 @@
+<!-- File: templates/track_spending.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Track Spending</h2>
+<p>Total spending in the past year: {{ total_spent }}</p>
+<h3>Spending in the Last 6 Months</h3>
+<ul>
+  {% for month, total in monthly_spending.items() %}
+    <li>{{ month }}: {{ total }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

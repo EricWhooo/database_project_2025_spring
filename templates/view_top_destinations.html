@@ -1,0 +1,39 @@
+<!-- File: templates/view_top_destinations.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Top Destinations</h2>
+<h3>Top 3 in the Last 3 Months</h3>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Destination</th>
+      <th>Ticket Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for dest in top_destinations_3m %}
+      <tr>
+        <td>{{ dest.arrival_airport }}</td>
+        <td>{{ dest.count }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<h3>Top 3 in the Last Year</h3>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Destination</th>
+      <th>Ticket Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for dest in top_destinations_year %}
+      <tr>
+        <td>{{ dest.arrival_airport }}</td>
+        <td>{{ dest.count }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

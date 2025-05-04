@@ -1,0 +1,11 @@
+<!-- File: templates/customer_home.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Customer Home</h2>
+<ul>
+  <li><a href="{{ url_for('customer.my_flights') }}">View My Flights</a></li>
+  <li><a href="{{ url_for('customer.purchase_ticket') }}">Purchase Ticket</a></li>
+  <li><a href="{{ url_for('customer.track_spending') }}">Track Spending</a></li>
+  <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+</ul>
+{% endblock %}

@@ -1,0 +1,35 @@
+<!-- File: templates/search_results.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Search Results</h2>
+{% if flights %}
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Flight Number</th>
+        <th>Departure Airport</th>
+        <th>Arrival Airport</th>
+        <th>Departure Time</th>
+        <th>Arrival Time</th>
+        <th>Price</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for flight in flights %}
+        <tr>
+          <td>{{ flight.flight_num }}</td>
+          <td>{{ flight.departure_airport }}</td>
+          <td>{{ flight.arrival_airport }}</td>
+          <td>{{ flight.departure_time }}</td>
+          <td>{{ flight.arrival_time }}</td>
+          <td>{{ flight.price }}</td>
+          <td>{{ flight.status }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>No flights match your criteria.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+<!-- File: templates/view_agents.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Booking Agent Statistics</h2>
+<h3>Top 5 (by Ticket Count) in the Last Month</h3>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Agent Email</th>
+      <th>Ticket Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for agent in top_month %}
+      <tr>
+        <td>{{ agent.email }}</td>
+        <td>{{ agent.ticket_count }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<h3>Top 5 (by Commission) in the Last Year</h3>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Agent Email</th>
+      <th>Commission</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for agent in top_year %}
+      <tr>
+        <td>{{ agent.email }}</td>
+        <td>{{ agent.total_commission }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

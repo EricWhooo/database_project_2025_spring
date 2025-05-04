@@ -1,0 +1,12 @@
+<!-- File: templates/add_booking_agent.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>Add Booking Agent</h2>
+<form method="post">
+  <div class="form-group">
+    <label>Agent Email</label>
+    <input type="text" name="agent_email" class="form-control" required>
+  </div>
+  <button class="btn btn-primary" type="submit">Add</button>
+</form>
+{% endblock %}
