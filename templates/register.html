@@ -1,80 +1,130 @@
-<!-- File: templates/register.html -->
-{% extends 'base.html' %}
+{% extends 'layout.html' %}
+{% block title %}Register{% endblock %}
 {% block content %}
-<h2>{{ user_type|capitalize }} Registration</h2>
-<form method="post" action="{{ url_for('auth.register', user_type=user_type) }}">
-  <div class="form-group">
-    <label>Email/Username</label>
-    <input type="text" name="email" class="form-control" required>
+
+  <!-- 顶部：User Type 切换按钮 -->
+  <div class="d-flex justify-content-center gap-2 mb-4">
+    <a href="{{ url_for('auth.register', user_type='customer') }}"
+       class="btn {% if user_type=='customer' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+      Customer
+    </a>
+    <a href="{{ url_for('auth.register', user_type='agent') }}"
+       class="btn {% if user_type=='agent' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+      Booking Agent
+    </a>
+    <a href="{{ url_for('auth.register', user_type='staff') }}"
+       class="btn {% if user_type=='staff' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+      Airline Staff
+    </a>
   </div>
-  <div class="form-group">
-    <label>Password</label>
-    <input type="password" name="password" class="form-control" required>
-  </div>
-  {% if user_type == 'customer' %}
-    <div class="form-group">
-      <label>Name</label>
-      <input type="text" name="name" class="form-control" required>
+
+  <h2 class="text-center mb-4">Register as {{ user_type|capitalize }}</h2>
+
+  <form method="post" novalidate>
+    <input type="hidden" name="user_type" value="{{ user_type }}">
+
+    <!-- 通用字段 -->
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input id="email" name="email" type="email"
+             class="form-control" required>
     </div>
-    <div class="form-group">
-      <label>Building Number</label>
-      <input type="text" name="building_number" class="form-control" required>
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input id="password" name="password" type="password"
+             class="form-control" required minlength="6">
     </div>
-    <div class="form-group">
-      <label>Street</label>
-      <input type="text" name="street" class="form-control" required>
+
+    {% if user_type == 'customer' %}
+      <!-- Customer 专属字段 -->
+      <div class="mb-3">
+        <label class="form-label">Name</label>
+        <input name="name" class="form-control" required>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Building #</label>
+          <input name="building_number" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Street</label>
+          <input name="street" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">City</label>
+          <input name="city" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">State</label>
+          <input name="state" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Phone</label>
+          <input name="phone_number" type="tel" class="form-control" required>
+        </div>
+      </div>
+      <div class="row g-3 mt-3">
+        <div class="col-md-4">
+          <label class="form-label">Passport #</label>
+          <input name="passport_number" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Expiration</label>
+          <input name="passport_expiration" type="date"
+                 class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Country</label>
+          <input name="passport_country" class="form-control" required>
+        </div>
+      </div>
+      <div class="mb-3 mt-3">
+        <label class="form-label">Date of Birth</label>
+        <input name="date_of_birth" type="date" class="form-control" required>
+      </div>
+
+    {% elif user_type == 'agent' %}
+      <!-- Booking Agent 专属字段 -->
+      <div class="mb-3">
+        <label class="form-label">Booking Agent ID</label>
+        <input name="booking_agent_id" class="form-control" required>
+      </div>
+
+      {% elif user_type == 'staff' %}
+        <!-- Airline Staff 专属字段 -->
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">First Name</label>
+            <input name="first_name" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Last Name</label>
+            <input name="last_name" class="form-control" required>
+          </div>
+        </div>
+        <div class="mb-3 mt-3">
+          <label class="form-label">Date of Birth</label>
+          <input name="date_of_birth" type="date" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Airline Name</label>
+          <input name="airline_name" class="form-control" required>
+        </div>
+        <!-- 新增：权限选项 -->
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="is_admin" id="perm_admin" value="Admin">
+          <label class="form-check-label" for="perm_admin">Admin</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="is_operator" id="perm_operator" value="Operator">
+          <label class="form-check-label" for="perm_operator">Operator</label>
+        </div>
+      {% endif %}
+
+    <div class="d-flex justify-content-between mt-4">
+      <a href="{{ url_for('auth.login') }}" class="btn btn-link">Back to Login</a>
+      <button type="submit" class="btn btn-primary">Register</button>
     </div>
-    <div class="form-group">
-      <label>City</label>
-      <input type="text" name="city" class="form-control" required>
-    </div>
-    <div class="form-group">
-      <label>State</label>
-      <input type="text" name="state" class="form-control" required>
-    </div>
-    <div class="form-group">
-      <label>Phone Number</label>
-      <input type="text" name="phone_number" class="form-control" required>
-    </div>
-    <div class="form-group">
-      <label>Passport Number</label>
-      <input type="text" name="passport_number" class="form-control" required>
-    </div>
-    <div class="form-group">
-      <label>Passport Expiration (YYYY-MM-DD)</label>
-      <input type="text" name="passport_expiration" class="form-control" required>
-    </div>
-    <div class="form-group">
-      <label>Passport Country</label>
-      <input type="text" name="passport_country" class="form-control" required>
-    </div>
-    <div class="form-group">
-      <label>Date of Birth (YYYY-MM-DD)</label>
-      <input type="text" name="date_of_birth" class="form-control" required>
-    </div>
-  {% elif user_type == 'agent' %}
-    <div class="form-group">
-      <label>Booking Agent ID</label>
-      <input type="text" name="booking_agent_id" class="form-control" required>
-    </div>
-  {% elif user_type == 'staff' %}
-    <div class="form-group">
-      <label>First Name</label>
-      <input type="text" name="first_name" class="form-control" required>
-    </div>
-    <div class="form-group">
-      <label>Last Name</label>
-      <input type="text" name="last_name" class="form-control" required>
-    </div>
-    <div class="form-group">
-      <label>Date of Birth (YYYY-MM-DD)</label>
-      <input type="text" name="date_of_birth" class="form-control" required>
-    </div>
-    <div class="form-group">
-      <label>Airline Name</label>
-      <input type="text" name="airline_name" class="form-control" required>
-    </div>
-  {% endif %}
-  <button class="btn btn-primary" type="submit">Register</button>
-</form>
+  </form>
+
 {% endblock %}

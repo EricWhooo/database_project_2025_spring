@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Passengers for Flight {{ flight_num or '' }}</h2>
+
+<form method="post" class="mb-4">
+  <div class="row g-2 align-items-end">
+    <div class="col-auto">
+      <label class="form-label">Flight Number</label>
+      <input type="text" name="flight_num" class="form-control" required>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary">查询乘客</button>
+    </div>
+  </div>
+</form>
+
+{% if flight_num %}
+  {% if passengers %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Customer Email</th>
+          <th>By Agent ID</th>
+          <th>Purchase Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in passengers %}
+        <tr>
+          <td>{{ p.customer_email }}</td>
+          <td>{{ p.booking_agent_id or '—' }}</td>
+          <td>{{ p.purchase_date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">No passengers found for flight {{ flight_num }}.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

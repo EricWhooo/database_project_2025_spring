@@ -1,12 +1,13 @@
-<!-- File: templates/agent_home.html -->
 {% extends 'base.html' %}
+{% from '_dashboard_macros.html' import card_item %}
 {% block content %}
-<h2>Booking Agent Home</h2>
-<ul>
-  <li><a href="{{ url_for('agent.my_flights') }}">View My Flights</a></li>
-  <li><a href="{{ url_for('agent.purchase_ticket') }}">Agent Purchase Ticket</a></li>
-  <li><a href="{{ url_for('agent.view_commission') }}">View Commission</a></li>
-  <li><a href="{{ url_for('agent.view_top_customers') }}">View Top Customers</a></li>
-  <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-</ul>
+<h2 class="mb-4">Booking Agent Dashboard</h2>
+
+<div class="row row-cols-2 row-cols-md-3 g-4">
+  {{ card_item(url_for('agent.my_flights'),        'airplane',   'My Flights') }}
+  {{ card_item(url_for('agent.purchase_ticket'),   'cart-plus',  'Agent Purchase','success') }}
+  {{ card_item(url_for('agent.view_commission'),   'cash-stack', 'Commission','warning') }}
+  {{ card_item(url_for('agent.view_top_customers'),'people',     'Top Customers','info') }}
+  {{ card_item(url_for('auth.logout'),             'box-arrow-right','Logout','secondary') }}
+</div>
 {% endblock %}

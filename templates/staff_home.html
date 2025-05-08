@@ -1,20 +1,24 @@
-<!-- File: templates/staff_home.html -->
 {% extends 'base.html' %}
+{% from '_dashboard_macros.html' import card_item %}
 {% block content %}
-<h2>Airline Staff Home</h2>
-<ul>
-  <li><a href="{{ url_for('staff.my_flights') }}">View My Flights</a></li>
-  <li><a href="{{ url_for('staff.create_flight') }}">Create New Flight</a></li>
-  <li><a href="{{ url_for('staff.change_status') }}">Change Flight Status</a></li>
-  <li><a href="{{ url_for('staff.add_airplane') }}">Add Airplane</a></li>
-  <li><a href="{{ url_for('staff.add_airport') }}">Add Airport</a></li>
-  <li><a href="{{ url_for('staff.view_agents') }}">View Booking Agents</a></li>
-  <li><a href="{{ url_for('staff.view_frequent_customers') }}">View Frequent Customers</a></li>
-  <li><a href="{{ url_for('staff.view_reports') }}">View Reports</a></li>
-  <li><a href="{{ url_for('staff.compare_revenue') }}">Compare Revenue</a></li>
-  <li><a href="{{ url_for('staff.view_top_destinations') }}">Top Destinations</a></li>
-  <li><a href="{{ url_for('staff.grant_permission') }}">Grant Permission</a></li>
-  <li><a href="{{ url_for('staff.add_booking_agent') }}">Add Booking Agent</a></li>
-  <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-</ul>
+<h2 class="mb-4">Airline Staff Dashboard</h2>
+
+<div class="row row-cols-2 row-cols-md-4 g-4">
+  {{ card_item(url_for('staff.my_flights'),           'airplane',       'My Flights') }}
+  {{ card_item(url_for('staff.create_flight'),        'plus-circle',    'Create Flight','success') }}
+  {{ card_item(url_for('staff.change_status'),        'pencil-square',  'Change Status','warning') }}
+  {{ card_item(url_for('staff.add_airplane'),         'truck',          'Add Airplane','info') }}
+  {{ card_item(url_for('staff.add_airport'),          'pin-map',        'Add Airport','info') }}
+  {{ card_item(url_for('staff.view_agents'),          'person-badge',   'Agents','secondary') }}
+  {{ card_item(url_for('staff.view_frequent_customers'),'award',        'Frequent Cust.','secondary') }}
+  {{ card_item(url_for('staff.view_reports'),         'bar-chart',      'Reports','danger') }}
+  {{ card_item(url_for('staff.compare_revenue'),      'pie-chart',      'Revenue','danger') }}
+  {{ card_item(url_for('staff.view_top_destinations'),'geo-alt',        'Top Dests','primary') }}
+  {{ card_item(url_for('staff.grant_permission'),     'unlock',         'Grant Perm','warning') }}
+  {{ card_item(url_for('staff.add_booking_agent'),    'person-plus',    'Add Agent','success') }}
+  {{ card_item(url_for('staff.view_passengers'),      'people-fill',    'Passengers','info') }}
+  {{ card_item(url_for('staff.customer_flights'),     'journal-text',   'Customer Flights','info') }}
+  {{ card_item(url_for('staff.status_summary'),       'graph-up',       'Status Summary','warning') }}
+  {{ card_item(url_for('auth.logout'),                'box-arrow-right','Logout','secondary') }}
+</div>
 {% endblock %}

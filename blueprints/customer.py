@@ -1,4 +1,5 @@
 # File: blueprints/customer.py
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from db import get_db_connection
 
@@ -29,10 +30,14 @@ def my_flights():
     try:
         query = """
             SELECT f.*
-            FROM ticket t
-            JOIN flight f ON t.airline_name = f.airline_name AND t.flight_num = f.flight_num
-            JOIN purchases p ON p.ticket_id = t.ticket_id
-            WHERE p.customer_email = %s
+              FROM ticket t
+              JOIN flight f
+                ON t.airline_name = f.airline_name
+               AND t.flight_num    = f.flight_num
+              JOIN purchases p
+                ON p.ticket_id = t.ticket_id
+             WHERE p.customer_email = %s
+          ORDER BY f.departure_time
         """
         with connection.cursor() as cursor:
             cursor.execute(query, (customer_email,))
@@ -47,29 +52,66 @@ def my_flights():
 @login_required_customer
 def purchase_ticket():
     if request.method == 'POST':
-        flight_airline = request.form.get('airline_name')
+        airline = request.form.get('airline_name')
         flight_num = request.form.get('flight_num')
         customer_email = session['user']['email']
         connection = get_db_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT MAX(ticket_id) as max_id FROM ticket")
-                result = cursor.fetchone()
-                new_ticket_id = (result['max_id'] or 0) + 1
+                # 1. 检查航班并获取 airplane_id
+                cursor.execute("""
+                    SELECT airplane_id
+                      FROM flight
+                     WHERE airline_name=%s AND flight_num=%s
+                """, (airline, flight_num))
+                row = cursor.fetchone()
+                if not row:
+                    flash("The specified flight does not exist.", "warning")
+                    return redirect(url_for('customer.purchase_ticket'))
+                airplane_id = row['airplane_id']
 
-                sql_ticket = "INSERT INTO ticket (ticket_id, airline_name, flight_num) VALUES (%s, %s, %s)"
-                cursor.execute(sql_ticket, (new_ticket_id, flight_airline, flight_num))
+                # 2. 查询飞机座位数
+                cursor.execute("""
+                    SELECT seats
+                      FROM airplane
+                     WHERE airline_name=%s AND airplane_id=%s
+                """, (airline, airplane_id))
+                seats = cursor.fetchone()['seats'] or 0
 
-                sql_purchase = "INSERT INTO purchases (ticket_id, customer_email, purchase_date) VALUES (%s, %s, CURDATE())"
-                cursor.execute(sql_purchase, (new_ticket_id, customer_email))
-                connection.commit()
-                flash("Ticket purchase successful", "success")
+                # 3. 查询已售出票数
+                cursor.execute("""
+                    SELECT COUNT(*) AS sold
+                      FROM ticket t
+                      JOIN purchases p ON t.ticket_id = p.ticket_id
+                     WHERE t.airline_name=%s AND t.flight_num=%s
+                """, (airline, flight_num))
+                sold = cursor.fetchone()['sold'] or 0
+
+                if sold >= seats:
+                    flash("Sorry, there are no seats available on this flight.", "warning")
+                    return redirect(url_for('customer.purchase_ticket'))
+
+                # 4. 插入 ticket & purchases
+                cursor.execute("SELECT MAX(ticket_id) AS max_id FROM ticket")
+                new_ticket_id = (cursor.fetchone()['max_id'] or 0) + 1
+
+                cursor.execute(
+                    "INSERT INTO ticket (ticket_id, airline_name, flight_num) VALUES (%s, %s, %s)",
+                    (new_ticket_id, airline, flight_num)
+                )
+                cursor.execute(
+                    "INSERT INTO purchases (ticket_id, customer_email, purchase_date) VALUES (%s, %s, CURDATE())",
+                    (new_ticket_id, customer_email)
+                )
+            connection.commit()
+            flash("Ticket purchase successful", "success")
         except Exception as e:
             connection.rollback()
             flash(f"Ticket purchase failed: {str(e)}", "danger")
         finally:
             connection.close()
         return redirect(url_for('customer.my_flights'))
+
     return render_template('purchase_ticket.html')
 
 @customer_bp.route('/track_spending', methods=['GET', 'POST'])
@@ -78,34 +120,48 @@ def track_spending():
     customer_email = session['user']['email']
     total_spent = 0
     monthly_spending = {}
+    # 默认统计过去 6 个月
+    months_interval = 6
+    # 默认总计过去一年
+    year_interval = 12
+
+    # 可扩展：从 request.form 获取自定义日期区间（此处简化只用固定区间）
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
+            # 1. 过去一年总支出
             query_total = """
-                SELECT SUM(f.price) as total
-                FROM purchases p
-                JOIN ticket t ON p.ticket_id = t.ticket_id
-                JOIN flight f ON t.airline_name = f.airline_name AND t.flight_num = f.flight_num
-                WHERE p.customer_email = %s AND f.departure_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                SELECT SUM(f.price) AS total
+                  FROM purchases p
+                  JOIN ticket t ON p.ticket_id = t.ticket_id
+                  JOIN flight f ON t.airline_name=f.airline_name AND t.flight_num=f.flight_num
+                 WHERE p.customer_email=%s
+                   AND p.purchase_date >= DATE_SUB(CURDATE(), INTERVAL %s MONTH)
             """
-            cursor.execute(query_total, (customer_email,))
+            cursor.execute(query_total, (customer_email, year_interval))
             result_total = cursor.fetchone()
-            total_spent = result_total['total'] if result_total and result_total['total'] else 0
+            total_spent = result_total['total'] or 0
 
+            # 2. 最近 6 个月按月统计
             query_monthly = """
-                SELECT DATE_FORMAT(p.purchase_date, '%Y-%m') as month, SUM(f.price) as monthly_total
-                FROM purchases p
-                JOIN ticket t ON p.ticket_id = t.ticket_id
-                JOIN flight f ON t.airline_name = f.airline_name AND t.flight_num = f.flight_num
-                WHERE p.customer_email = %s AND p.purchase_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-                GROUP BY month
+                SELECT DATE_FORMAT(p.purchase_date,'%%Y-%%m') AS month,
+                       SUM(f.price) AS monthly_total
+                  FROM purchases p
+                  JOIN ticket t ON p.ticket_id = t.ticket_id
+                  JOIN flight f ON t.airline_name=f.airline_name AND t.flight_num=f.flight_num
+                 WHERE p.customer_email=%s
+                   AND p.purchase_date >= DATE_SUB(CURDATE(), INTERVAL %s MONTH)
+                 GROUP BY month
+                 ORDER BY month
             """
-            cursor.execute(query_monthly, (customer_email,))
-            results = cursor.fetchall()
-            for row in results:
-                monthly_spending[row['month']] = row['monthly_total']
+            cursor.execute(query_monthly, (customer_email, months_interval))
+            for row in cursor.fetchall():
+                monthly_spending[row['month']] = row['monthly_total'] or 0
     except Exception as e:
-        flash(f"Failed to obtain consumption statistics: {str(e)}", "danger")
+        flash(f"Failed to obtain spending statistics: {str(e)}", "danger")
     finally:
         connection.close()
-    return render_template('track_spending.html', total_spent=total_spent, monthly_spending=monthly_spending)
+
+    return render_template('track_spending.html',
+                           total_spent=total_spent,
+                           monthly_spending=monthly_spending)

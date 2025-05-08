@@ -1,0 +1,11 @@
+{# -------------  _dashboard_macros.html  ------------- #}
+{% macro card_item(url, icon, text, color='primary') -%}
+  <div class="col">
+    <a href="{{ url }}" class="card-link">
+      <div class="glass-card p-4 text-center text-{{ color }}">
+        <i class="bi bi-{{ icon }} display-6 mb-2"></i>
+        <h6 class="m-0">{{ text }}</h6>
+      </div>
+    </a>
+  </div>
+{%- endmacro %}

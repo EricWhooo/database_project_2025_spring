@@ -1,0 +1,51 @@
+:root{
+    --bs-border-radius-lg:1rem;
+    --atrs-glass-bg:rgba(255,255,255,.30);
+  }
+  
+  /* full-screen photo background */
+  body{
+    font-family:"Inter","Noto Sans",sans-serif;
+    background:url("../img/bg_plane.jpg") center/cover fixed no-repeat;
+    margin:0;
+  }
+  
+  /* universal glass wrapper */
+  .glass-shell{
+    backdrop-filter:blur(15px) saturate(160%);
+    background:var(--atrs-glass-bg);
+    border-radius:24px;
+    border:1px solid rgba(255,255,255,.35);
+    padding:2.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* cards inside dashboard */
+  .card-link{ text-decoration:none }
+  .card-link .glass-card{
+    backdrop-filter:blur(12px) saturate(160%);
+    background:var(--atrs-glass-bg);
+    border-radius:20px;
+    border:1px solid rgba(255,255,255,.25);
+    transition:.25s ease;
+  }
+  .card-link .glass-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 .75rem 1.5rem rgba(0,0,0,.2);
+  }
+  
+  /* back button */
+  .btn-back{color:#fff!important}
+  
+  /* —— 新增：让所有 <table> 带玻璃卡片式圆角 —— */
+  .table-container {
+    background: var(--atrs-glass-bg);
+    border: 1px solid rgba(255,255,255,.35);
+    border-radius: var(--bs-border-radius-lg);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    overflow: auto;
+  }
+  .table-container .table {
+    margin-bottom: 0; /* 去掉表格底部多余空隙 */
+  }

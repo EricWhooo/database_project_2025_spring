@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Status Summary</h2>
+<table class="table table-bordered w-50">
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in summary %}
+    <tr>
+      <td>{{ row.status }}</td>
+      <td>{{ row.count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

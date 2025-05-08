@@ -1,41 +1,56 @@
-# File: blueprints/staff.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from db import get_db_connection
+from functools import wraps
 
 staff_bp = Blueprint('staff', __name__, template_folder='../templates')
 
 def login_required_staff(func):
-    from functools import wraps
     @wraps(func)
-    def decorated_function(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         user = session.get('user')
         if not user or user.get('user_type') != 'staff':
-            flash("Please log in as an airline staff", "warning")
+            flash("Please log in as airline staff", "warning")
             return redirect(url_for('auth.login'))
         return func(*args, **kwargs)
-    return decorated_function
+    return wrapper
 
 def admin_required(func):
-    from functools import wraps
     @wraps(func)
-    def decorated_function(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         user = session.get('user')
-        if not user.get('is_admin'):
-            flash("This action requires admin privileges", "danger")
-            return redirect(url_for('staff.staff_home'))
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT 1 FROM permission WHERE username=%s AND LOWER(permission_type)='admin'",
+                    (user['email'],)
+                )
+                if not cur.fetchone():
+                    flash("Admin privilege required", "danger")
+                    return redirect(url_for('staff.staff_home'))
+        finally:
+            conn.close()
         return func(*args, **kwargs)
-    return decorated_function
+    return wrapper
 
 def operator_required(func):
-    from functools import wraps
     @wraps(func)
-    def decorated_function(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         user = session.get('user')
-        if not user.get('is_operator'):
-            flash("This action requires operator privileges", "danger")
-            return redirect(url_for('staff.staff_home'))
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT 1 FROM permission WHERE username=%s AND LOWER(permission_type)='operator'",
+                    (user['email'],)
+                )
+                if not cur.fetchone():
+                    flash("Operator privilege required", "danger")
+                    return redirect(url_for('staff.staff_home'))
+        finally:
+            conn.close()
         return func(*args, **kwargs)
-    return decorated_function
+    return wrapper
 
 @staff_bp.route('/home')
 @login_required_staff
@@ -45,318 +60,397 @@ def staff_home():
 @staff_bp.route('/my_flights')
 @login_required_staff
 def my_flights():
-    airline_name = session['user'].get('airline_name')
-    connection = get_db_connection()
+    airline = session['user']['airline_name']
+    conn = get_db_connection()
     flights = []
     try:
-        query = """
-            SELECT * FROM flight 
-            WHERE airline_name = %s AND departure_time >= NOW() AND departure_time <= DATE_ADD(NOW(), INTERVAL 30 DAY)
-        """
-        with connection.cursor() as cursor:
-            cursor.execute(query, (airline_name,))
-            flights = cursor.fetchall()
-    except Exception as e:
-        flash(f"Failed to retrieve flights: {str(e)}", "danger")
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT * FROM flight
+                WHERE airline_name=%s
+                  AND departure_time>=NOW()
+                  AND departure_time<=DATE_ADD(NOW(),INTERVAL 30 DAY)
+            """, (airline,))
+            flights = cur.fetchall()
     finally:
-        connection.close()
+        conn.close()
     return render_template('staff_my_flights.html', flights=flights)
 
-@staff_bp.route('/create_flight', methods=['GET', 'POST'])
+@staff_bp.route('/create_flight', methods=['GET','POST'])
 @login_required_staff
 @admin_required
 def create_flight():
-    if request.method == 'POST':
-        airline_name = session['user'].get('airline_name')
-        flight_num = request.form.get('flight_num')
-        departure_airport = request.form.get('departure_airport')
-        departure_time = request.form.get('departure_time')
-        arrival_airport = request.form.get('arrival_airport')
-        arrival_time = request.form.get('arrival_time')
-        price = request.form.get('price')
-        status = request.form.get('status')
-        airplane_id = request.form.get('airplane_id')
-        connection = get_db_connection()
+    if request.method=='POST':
+        airline = session['user']['airline_name']
+        data = {k: request.form[k] for k in (
+            'flight_num','departure_airport','departure_time',
+            'arrival_airport','arrival_time','price','status','airplane_id'
+        )}
+        conn = get_db_connection()
         try:
-            with connection.cursor() as cursor:
-                sql = """
-                    INSERT INTO flight (airline_name, flight_num, departure_airport, departure_time, arrival_airport, arrival_time, price, status, airplane_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """
-                cursor.execute(sql, (airline_name, flight_num, departure_airport, departure_time, arrival_airport, arrival_time, price, status, airplane_id))
-                connection.commit()
-                flash("Flight created successfully", "success")
+            with conn.cursor() as cur:
+                cur.execute("""
+                  INSERT INTO flight
+                  (airline_name, flight_num, departure_airport, departure_time,
+                   arrival_airport, arrival_time, price, status, airplane_id)
+                  VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """, (
+                  airline, data['flight_num'], data['departure_airport'], data['departure_time'],
+                  data['arrival_airport'], data['arrival_time'], data['price'],
+                  data['status'], data['airplane_id']
+                ))
+                conn.commit()
+                flash("Flight created", "success")
         except Exception as e:
-            connection.rollback()
-            flash(f"Flight creation failed: {str(e)}", "danger")
+            conn.rollback()
+            flash(f"Create flight failed: {e}", "danger")
         finally:
-            connection.close()
+            conn.close()
         return redirect(url_for('staff.my_flights'))
     return render_template('create_flight.html')
 
-@staff_bp.route('/change_status', methods=['GET', 'POST'])
+@staff_bp.route('/change_status', methods=['GET','POST'])
 @login_required_staff
 @operator_required
 def change_status():
+    airline = session['user']['airline_name']
+
     if request.method == 'POST':
-        airline_name = session['user'].get('airline_name')
         flight_num = request.form.get('flight_num')
         new_status = request.form.get('new_status')
-        connection = get_db_connection()
+        conn = get_db_connection()
         try:
-            with connection.cursor() as cursor:
-                sql = "UPDATE flight SET status = %s WHERE airline_name = %s AND flight_num = %s"
-                cursor.execute(sql, (new_status, airline_name, flight_num))
-                connection.commit()
-                flash("Flight status updated successfully", "success")
+            with conn.cursor() as cur:
+                cur.execute("""
+                  UPDATE flight
+                     SET status=%s
+                   WHERE airline_name=%s AND flight_num=%s
+                """, (new_status, airline, flight_num))
+            conn.commit()
+            flash("Status updated", "success")
         except Exception as e:
-            connection.rollback()
-            flash(f"Status update failed: {str(e)}", "danger")
+            conn.rollback()
+            flash(f"Update failed: {e}", "danger")
         finally:
-            connection.close()
-        return redirect(url_for('staff.my_flights'))
-    return render_template('change_status.html')
+            conn.close()
+        # 留在本页以查看更新结果
+        return redirect(url_for('staff.change_status'))
 
-@staff_bp.route('/add_airplane', methods=['GET', 'POST'])
+    # GET: 先拉取该 airline 的所有航班
+    conn = get_db_connection()
+    flights = []
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT flight_num, departure_airport, arrival_airport,
+                       departure_time, arrival_time, status
+                  FROM flight
+                 WHERE airline_name=%s
+                 ORDER BY departure_time
+            """, (airline,))
+            flights = cur.fetchall()
+    finally:
+        conn.close()
+
+    return render_template('change_status.html', flights=flights)
+
+@staff_bp.route('/add_airplane', methods=['GET','POST'])
 @login_required_staff
 @admin_required
 def add_airplane():
-    if request.method == 'POST':
-        airline_name = session['user'].get('airline_name')
-        airplane_id = request.form.get('airplane_id')
-        seats = request.form.get('seats')
-        connection = get_db_connection()
+    if request.method=='POST':
+        airline = session['user']['airline_name']
+        aid = request.form['airplane_id']
+        seats = request.form['seats']
+        conn = get_db_connection()
         try:
-            with connection.cursor() as cursor:
-                sql = "INSERT INTO airplane (airline_name, airplane_id, seats) VALUES (%s, %s, %s)"
-                cursor.execute(sql, (airline_name, airplane_id, seats))
-                connection.commit()
-                flash("Airplane added successfully", "success")
+            with conn.cursor() as cur:
+                cur.execute(
+                  "INSERT INTO airplane (airline_name, airplane_id, seats) VALUES (%s,%s,%s)",
+                  (airline, aid, seats)
+                )
+                conn.commit()
+                flash("Airplane added", "success")
         except Exception as e:
-            connection.rollback()
-            flash(f"Failed to add airplane: {str(e)}", "danger")
+            conn.rollback()
+            flash(f"Add airplane failed: {e}", "danger")
         finally:
-            connection.close()
+            conn.close()
         return redirect(url_for('staff.staff_home'))
     return render_template('add_airplane.html')
 
-@staff_bp.route('/add_airport', methods=['GET', 'POST'])
+@staff_bp.route('/add_airport', methods=['GET','POST'])
 @login_required_staff
 @admin_required
 def add_airport():
-    if request.method == 'POST':
-        airport_name = request.form.get('airport_name')
-        airport_city = request.form.get('airport_city')
-        connection = get_db_connection()
+    if request.method=='POST':
+        name = request.form['airport_name']
+        city = request.form['airport_city']
+        conn = get_db_connection()
         try:
-            with connection.cursor() as cursor:
-                sql = "INSERT INTO airport (airport_name, airport_city) VALUES (%s, %s)"
-                cursor.execute(sql, (airport_name, airport_city))
-                connection.commit()
-                flash("Airport added successfully", "success")
+            with conn.cursor() as cur:
+                cur.execute(
+                  "INSERT INTO airport (airport_name, airport_city) VALUES (%s,%s)",
+                  (name, city)
+                )
+                conn.commit()
+                flash("Airport added", "success")
         except Exception as e:
-            connection.rollback()
-            flash(f"Failed to add airport: {str(e)}", "danger")
+            conn.rollback()
+            flash(f"Add airport failed: {e}", "danger")
         finally:
-            connection.close()
+            conn.close()
         return redirect(url_for('staff.staff_home'))
     return render_template('add_airport.html')
 
 @staff_bp.route('/view_agents')
 @login_required_staff
 def view_agents():
-    top_month = []
-    top_year = []
-    connection = get_db_connection()
+    top_month, top_year = [], []
+    conn = get_db_connection()
     try:
-        with connection.cursor() as cursor:
-            query_month = """
-                SELECT ba.email, COUNT(*) as ticket_count
+        with conn.cursor() as cur:
+            cur.execute("""
+              SELECT ba.email, COUNT(*) AS ticket_count
                 FROM purchases p
-                JOIN booking_agent ba ON p.booking_agent_id = ba.booking_agent_id
-                WHERE p.purchase_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+                JOIN booking_agent ba ON p.booking_agent_id=ba.booking_agent_id
+                WHERE p.purchase_date>=DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
                 GROUP BY ba.email
                 ORDER BY ticket_count DESC
                 LIMIT 5
-            """
-            cursor.execute(query_month)
-            top_month = cursor.fetchall()
-
-            query_year = """
-                SELECT ba.email, SUM(f.price*0.1) as total_commission
+            """)
+            top_month = cur.fetchall()
+            cur.execute("""
+              SELECT ba.email, SUM(f.price*0.1) AS total_commission
                 FROM purchases p
-                JOIN ticket t ON p.ticket_id = t.ticket_id
-                JOIN flight f ON t.airline_name = f.airline_name AND t.flight_num = f.flight_num
-                JOIN booking_agent ba ON p.booking_agent_id = ba.booking_agent_id
-                WHERE p.purchase_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                JOIN ticket t ON p.ticket_id=t.ticket_id
+                JOIN flight f ON t.airline_name=f.airline_name AND t.flight_num=f.flight_num
+                JOIN booking_agent ba ON p.booking_agent_id=ba.booking_agent_id
+                WHERE p.purchase_date>=DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
                 GROUP BY ba.email
                 ORDER BY total_commission DESC
                 LIMIT 5
-            """
-            cursor.execute(query_year)
-            top_year = cursor.fetchall()
-    except Exception as e:
-        flash(f"Failed to retrieve agent data: {str(e)}", "danger")
+            """)
+            top_year = cur.fetchall()
     finally:
-        connection.close()
+        conn.close()
     return render_template('view_agents.html', top_month=top_month, top_year=top_year)
 
 @staff_bp.route('/view_frequent_customers')
 @login_required_staff
 def view_frequent_customers():
-    frequent_customers = []
-    connection = get_db_connection()
+    data = []
+    conn = get_db_connection()
     try:
-        with connection.cursor() as cursor:
-            query = """
-                SELECT p.customer_email, COUNT(*) as ticket_count
+        with conn.cursor() as cur:
+            cur.execute("""
+              SELECT p.customer_email, COUNT(*) AS ticket_count
                 FROM purchases p
-                WHERE p.purchase_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                WHERE p.purchase_date>=DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
                 GROUP BY p.customer_email
                 ORDER BY ticket_count DESC
-                LIMIT 1
-            """
-            cursor.execute(query)
-            frequent_customers = cursor.fetchall()
-    except Exception as e:
-        flash(f"Failed to retrieve frequent customers: {str(e)}", "danger")
+                LIMIT 5
+            """)
+            data = cur.fetchall()
     finally:
-        connection.close()
-    return render_template('view_frequent_customers.html', frequent_customers=frequent_customers)
+        conn.close()
+    return render_template('view_frequent_customers.html', frequent_customers=data)
 
 @staff_bp.route('/view_reports')
 @login_required_staff
 def view_reports():
-    reports = {}
-    connection = get_db_connection()
+    rpt = {'total_tickets':0, 'monthly':[]}
+    conn = get_db_connection()
     try:
-        with connection.cursor() as cursor:
-            query_total = "SELECT COUNT(*) as total_tickets FROM purchases WHERE purchase_date BETWEEN %s AND %s"
-            cursor.execute(query_total, ('2025-01-01', '2025-12-31'))
-            reports['total_tickets'] = cursor.fetchone()['total_tickets']
-            query_monthly = """
-                SELECT DATE_FORMAT(p.purchase_date, '%Y-%m') as month, COUNT(*) as tickets_sold
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS total_tickets FROM purchases")
+            rpt['total_tickets'] = cur.fetchone()['total_tickets']
+            cur.execute("""
+              SELECT DATE_FORMAT(p.purchase_date,'%Y-%m') AS month,
+                     COUNT(*) AS tickets_sold
                 FROM purchases p
                 GROUP BY month
-            """
-            cursor.execute(query_monthly)
-            reports['monthly'] = cursor.fetchall()
-    except Exception as e:
-        flash(f"Failed to get reports: {str(e)}", "danger")
+            """)
+            rpt['monthly'] = cur.fetchall()
     finally:
-        connection.close()
-    return render_template('view_reports.html', reports=reports)
+        conn.close()
+    return render_template('view_reports.html', reports=rpt)
 
 @staff_bp.route('/compare_revenue')
 @login_required_staff
 def compare_revenue():
-    direct_revenue = 0
-    indirect_revenue = 0
-    connection = get_db_connection()
+    direct = indirect = 0
+    conn = get_db_connection()
     try:
-        with connection.cursor() as cursor:
-            query_direct = """
-                SELECT SUM(f.price) as revenue
+        with conn.cursor() as cur:
+            cur.execute("""
+              SELECT SUM(f.price) AS revenue
                 FROM purchases p
-                JOIN ticket t ON p.ticket_id = t.ticket_id
-                JOIN flight f ON t.airline_name = f.airline_name AND t.flight_num = f.flight_num
-                WHERE p.booking_agent_id IS NULL AND p.purchase_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
-            """
-            cursor.execute(query_direct)
-            result = cursor.fetchone()
-            direct_revenue = result['revenue'] if result and result['revenue'] else 0
-
-            query_indirect = """
-                SELECT SUM(f.price) as revenue
+                JOIN ticket t ON p.ticket_id=t.ticket_id
+                JOIN flight f ON t.airline_name=f.airline_name AND t.flight_num=f.flight_num
+                WHERE p.booking_agent_id IS NULL
+                  AND p.purchase_date>=DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+            """)
+            direct = cur.fetchone().get('revenue') or 0
+            cur.execute("""
+              SELECT SUM(f.price) AS revenue
                 FROM purchases p
-                JOIN ticket t ON p.ticket_id = t.ticket_id
-                JOIN flight f ON t.airline_name = f.airline_name AND t.flight_num = f.flight_num
-                WHERE p.booking_agent_id IS NOT NULL AND p.purchase_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
-            """
-            cursor.execute(query_indirect)
-            result = cursor.fetchone()
-            indirect_revenue = result['revenue'] if result and result['revenue'] else 0
-    except Exception as e:
-        flash(f"Failed to retrieve revenue comparison: {str(e)}", "danger")
+                JOIN ticket t ON p.ticket_id=t.ticket_id
+                JOIN flight f ON t.airline_name=f.airline_name AND t.flight_num=f.flight_num
+                WHERE p.booking_agent_id IS NOT NULL
+                  AND p.purchase_date>=DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+            """)
+            indirect = cur.fetchone().get('revenue') or 0
     finally:
-        connection.close()
-    return render_template('compare_revenue.html', direct_revenue=direct_revenue, indirect_revenue=indirect_revenue)
+        conn.close()
+    return render_template('compare_revenue.html',
+                           direct_revenue=direct,
+                           indirect_revenue=indirect)
 
 @staff_bp.route('/view_top_destinations')
 @login_required_staff
 def view_top_destinations():
-    top_destinations_3m = []
-    top_destinations_year = []
-    connection = get_db_connection()
+    top3m = top1y = []
+    conn = get_db_connection()
     try:
-        with connection.cursor() as cursor:
-            query_3m = """
-                SELECT arrival_airport, COUNT(*) as count
+        with conn.cursor() as cur:
+            cur.execute("""
+              SELECT arrival_airport, COUNT(*) AS count
                 FROM flight
-                WHERE departure_time >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                WHERE departure_time>=DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
                 GROUP BY arrival_airport
                 ORDER BY count DESC
                 LIMIT 3
-            """
-            cursor.execute(query_3m)
-            top_destinations_3m = cursor.fetchall()
-
-            query_year = """
-                SELECT arrival_airport, COUNT(*) as count
+            """)
+            top3m = cur.fetchall()
+            cur.execute("""
+              SELECT arrival_airport, COUNT(*) AS count
                 FROM flight
-                WHERE departure_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                WHERE departure_time>=DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
                 GROUP BY arrival_airport
                 ORDER BY count DESC
                 LIMIT 3
-            """
-            cursor.execute(query_year)
-            top_destinations_year = cursor.fetchall()
-    except Exception as e:
-        flash(f"Failed to retrieve top destinations: {str(e)}", "danger")
+            """)
+            top1y = cur.fetchall()
     finally:
-        connection.close()
-    return render_template('view_top_destinations.html', top_destinations_3m=top_destinations_3m, top_destinations_year=top_destinations_year)
+        conn.close()
+    return render_template('view_top_destinations.html',
+                           top_destinations_3m=top3m,
+                           top_destinations_year=top1y)
 
-@staff_bp.route('/grant_permission', methods=['GET', 'POST'])
+@staff_bp.route('/grant_permission', methods=['GET','POST'])
 @login_required_staff
 @admin_required
 def grant_permission():
-    if request.method == 'POST':
-        staff_username = request.form.get('staff_username')
-        permission_type = request.form.get('permission_type')
-        connection = get_db_connection()
+    if request.method=='POST':
+        usern = request.form['staff_username']
+        perm  = request.form['permission_type']
+        conn = get_db_connection()
         try:
-            with connection.cursor() as cursor:
-                sql = "INSERT INTO permission (username, permission_type) VALUES (%s, %s)"
-                cursor.execute(sql, (staff_username, permission_type))
-                connection.commit()
-                flash("Permission granted successfully", "success")
+            with conn.cursor() as cur:
+                cur.execute(
+                  "INSERT INTO permission (username, permission_type) VALUES (%s,%s)",
+                  (usern, perm)
+                )
+                conn.commit()
+                flash("Permission granted", "success")
         except Exception as e:
-            connection.rollback()
-            flash(f"Failed to grant permission: {str(e)}", "danger")
+            conn.rollback()
+            flash(f"Grant failed: {e}", "danger")
         finally:
-            connection.close()
+            conn.close()
         return redirect(url_for('staff.staff_home'))
     return render_template('grant_permission.html')
 
-@staff_bp.route('/add_booking_agent', methods=['GET', 'POST'])
+@staff_bp.route('/add_booking_agent', methods=['GET','POST'])
 @login_required_staff
 @admin_required
 def add_booking_agent():
-    if request.method == 'POST':
-        agent_email = request.form.get('agent_email')
-        airline_name = session['user'].get('airline_name')
-        connection = get_db_connection()
+    if request.method=='POST':
+        email = request.form['agent_email']
+        airline = session['user']['airline_name']
+        conn = get_db_connection()
         try:
-            with connection.cursor() as cursor:
-                sql = "INSERT INTO booking_agent_work_for (email, airline_name) VALUES (%s, %s)"
-                cursor.execute(sql, (agent_email, airline_name))
-                connection.commit()
-                flash("Booking agent added successfully", "success")
+            with conn.cursor() as cur:
+                cur.execute(
+                  "INSERT INTO booking_agent_work_for (email, airline_name) VALUES (%s,%s)",
+                  (email, airline)
+                )
+                conn.commit()
+                flash("Agent added", "success")
         except Exception as e:
-            connection.rollback()
-            flash(f"Failed to add booking agent: {str(e)}", "danger")
+            conn.rollback()
+            flash(f"Add agent failed: {e}", "danger")
         finally:
-            connection.close()
+            conn.close()
         return redirect(url_for('staff.staff_home'))
     return render_template('add_booking_agent.html')
+
+@staff_bp.route('/view_passengers', methods=['GET','POST'])
+@login_required_staff
+def view_passengers():
+    airline = session['user']['airline_name']
+    passengers = []
+    flight_num = None
+    if request.method == 'POST':
+        flight_num = request.form.get('flight_num')
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                  SELECT p.customer_email, p.booking_agent_id, p.purchase_date
+                    FROM purchases p
+                    JOIN ticket t ON p.ticket_id = t.ticket_id
+                   WHERE t.airline_name=%s AND t.flight_num=%s
+                """, (airline, flight_num))
+                passengers = cur.fetchall()
+        finally:
+            conn.close()
+    return render_template('view_passengers.html',
+                           passengers=passengers,
+                           flight_num=flight_num)
+
+@staff_bp.route('/customer_flights', methods=['GET','POST'])
+@login_required_staff
+def customer_flights():
+    airline = session['user']['airline_name']
+    flights = []
+    customer_email = None
+    if request.method == 'POST':
+        customer_email = request.form.get('customer_email')
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                  SELECT f.*
+                    FROM purchases p
+                    JOIN ticket t ON p.ticket_id = t.ticket_id
+                    JOIN flight f ON t.airline_name=f.airline_name AND t.flight_num=f.flight_num
+                   WHERE p.customer_email=%s AND f.airline_name=%s
+                   ORDER BY f.departure_time
+                """, (customer_email, airline))
+                flights = cur.fetchall()
+        finally:
+            conn.close()
+    return render_template('staff_customer_flights.html',
+                           flights=flights,
+                           customer_email=customer_email)
+
+@staff_bp.route('/status_summary')
+@login_required_staff
+def status_summary():
+    airline = session['user']['airline_name']
+    summary = []
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+              SELECT status, COUNT(*) AS count
+                FROM flight
+               WHERE airline_name=%s
+               GROUP BY status
+            """, (airline,))
+            summary = cur.fetchall()
+    finally:
+        conn.close()
+    return render_template('status_summary.html', summary=summary)

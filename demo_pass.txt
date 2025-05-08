@@ -1,0 +1,149 @@
+-- 测试数据脚本：插入多家中美航空公司、机场、飞机、用户、航班、票据等
+
+-- —— 一、航空公司表 airline ——
+INSERT INTO airline (airline_name) VALUES
+  ('American Airlines'),
+  ('Delta'),
+  ('JetBlue'),
+  ('Southwest'),
+  ('United'),
+  ('Air China'),
+  ('China Eastern'),
+  ('China Southern'),
+  ('Hainan Airlines'),
+  ('Shenzhen Airlines');
+
+-- —— 二、机场表 airport ——
+INSERT INTO airport (airport_name, airport_city) VALUES
+  ('JFK', 'New York'),
+  ('LAX', 'Los Angeles'),
+  ('PEK', 'Beijing'),
+  ('PVG', 'Shanghai'),
+  ('CAN', 'Guangzhou'),
+  ('SZX', 'Shenzhen'),
+  ('CTU', 'Chengdu'),
+  ('KMG', 'Kunming'),
+  ('XIY', 'Xi\'an');
+
+-- —— 三、飞机表 airplane ——
+INSERT INTO airplane (airline_name, airplane_id, seats) VALUES
+  -- 美国航空
+  ('American Airlines', 1, 190),
+  ('American Airlines', 2, 200),
+  ('Delta',            1, 150),
+  ('Delta',            2, 180),
+  ('JetBlue',          1, 170),
+  ('Southwest',        1, 160),
+  ('United',           1, 180),
+  -- 中国航空
+  ('Air China',        1, 280),
+  ('Air China',        2, 300),
+  ('China Eastern',    1, 260),
+  ('China Eastern',    2, 280),
+  ('China Southern',   1, 270),
+  ('Hainan Airlines',  1, 200),
+  ('Shenzhen Airlines',1, 180);
+
+-- —— 四、航空公司员工 airline_staff & 权限 permission ——
+INSERT INTO airline_staff
+  (username, password, first_name, last_name, date_of_birth, airline_name) VALUES
+  ('admin.delta@example.com',    MD5('pass123'), 'Alice',   'Admin',    '1980-01-01', 'Delta'),
+  ('op.delta@example.com',       MD5('pass123'), 'Bob',     'Operator', '1981-02-02', 'Delta'),
+  ('both.delta@example.com',     MD5('pass123'), 'Carol',   'Both',     '1982-03-03', 'Delta'),
+  ('none.delta@example.com',     MD5('pass123'), 'Dave',    'None',     '1983-04-04', 'Delta'),
+  ('admin.airchina@example.com', MD5('pass123'), 'Eve',     'Admin',    '1979-05-05', 'Air China'),
+  ('op.ceastern@example.com',    MD5('pass123'), 'Frank',   'Operator', '1984-06-06', 'China Eastern'),
+  ('both.csouth@example.com',    MD5('pass123'), 'Grace',   'Both',     '1985-07-07', 'China Southern');
+
+INSERT INTO permission (username, permission_type) VALUES
+  ('admin.delta@example.com','Admin'),
+  ('op.delta@example.com','Operator'),
+  ('both.delta@example.com','Admin'),
+  ('both.delta@example.com','Operator'),
+  ('admin.airchina@example.com','Admin'),
+  ('op.ceastern@example.com','Operator'),
+  ('both.csouth@example.com','Admin'),
+  ('both.csouth@example.com','Operator');
+
+-- —— 五、Booking Agent & 工作 airline 关系 ——
+INSERT INTO booking_agent (email, password, booking_agent_id) VALUES
+  ('agentA@example.com', MD5('agentpass1'), 201),
+  ('agentB@example.com', MD5('agentpass2'), 202),
+  ('agentC@example.com', MD5('agentpass3'), 203),
+  ('agentCH1@example.com', MD5('agentpass4'), 204),
+  ('agentCH2@example.com', MD5('agentpass5'), 205);
+
+INSERT INTO booking_agent_work_for (email, airline_name) VALUES
+  ('agentA@example.com','Delta'),
+  ('agentA@example.com','American Airlines'),
+  ('agentB@example.com','Delta'),
+  ('agentC@example.com','United'),
+  ('agentCH1@example.com','Air China'),
+  ('agentCH1@example.com','China Eastern'),
+  ('agentCH2@example.com','China Southern');
+
+-- —— 六、客户 customer ——
+INSERT INTO customer
+  (email, name, password, building_number, street, city, state, phone_number,
+   passport_number, passport_expiration, passport_country, date_of_birth)
+VALUES
+  ('custA@example.com','Cust A', MD5('custpassA'),'11','A St','New York','NY',1234,'PA111','2030-01-01','USA','1990-01-01'),
+  ('custB@example.com','Cust B', MD5('custpassB'),'22','B St','Boston','MA',2345,'PA222','2030-02-02','USA','1991-02-02'),
+  ('custC@example.com','Cust C', MD5('custpassC'),'33','C St','Chicago','IL',3456,'PA333','2030-03-03','USA','1992-03-03'),
+  ('custCH1@example.com','ZH Cust1', MD5('custpassC1'),'44','D Rd','Beijing','BJ',4567,'PC444','2031-04-04','CHN','1993-04-04'),
+  ('custCH2@example.com','ZH Cust2', MD5('custpassC2'),'55','E Rd','Shanghai','SH',5678,'PC555','2032-05-05','CHN','1994-05-05');
+
+-- —— 七、航班 flight ——
+INSERT INTO flight
+  (airline_name, flight_num, departure_airport, departure_time,
+   arrival_airport, arrival_time, price, status, airplane_id)
+VALUES
+  -- Delta 中美航班
+  ('Delta', 1001, 'JFK','2025-06-15 08:00:00','LAX','2025-06-15 11:00:00',300,'Scheduled',    1),
+  ('Delta', 1002, 'LAX','2025-06-16 09:00:00','JFK','2025-06-16 17:00:00',300,'Scheduled',    2),
+  ('Delta', 1003, 'JFK','2025-05-01 06:00:00','LAX','2025-05-01 09:00:00',320,'Completed',    1),
+
+  -- American Airlines 美航
+  ('American Airlines',2001,'JFK','2025-06-20 07:00:00','LAX','2025-06-20 10:00:00',310,'Scheduled',1),
+  ('American Airlines',2002,'LAX','2025-05-02 12:00:00','JFK','2025-05-02 20:00:00',310,'Completed',2),
+
+  -- Air China 国内
+  ('Air China',101,'PEK','2025-05-10 09:00:00','PVG','2025-05-10 11:00:00',250,'Scheduled',1),
+  ('Air China',102,'PVG','2025-04-01 07:00:00','PEK','2025-04-01 09:00:00',240,'Completed',2),
+
+  -- China Eastern
+  ('China Eastern',201,'PVG','2025-05-12 14:00:00','CAN','2025-05-12 16:30:00',260,'Scheduled',1),
+  ('China Eastern',202,'CAN','2025-04-10 13:00:00','PVG','2025-04-10 15:30:00',255,'Completed',2),
+
+  -- China Southern
+  ('China Southern',301,'CAN','2025-05-05 08:00:00','SZX','2025-05-05 10:00:00',230,'In Progress',1),
+  ('China Southern',302,'SZX','2025-05-15 20:00:00','CAN','2025-05-15 22:30:00',235,'Delayed',    1),
+
+  -- Hainan Airlines
+  ('Hainan Airlines',401,'CAN','2025-06-01 06:00:00','KMG','2025-06-01 08:30:00',200,'Scheduled',1),
+
+  -- Shenzhen Airlines
+  ('Shenzhen Airlines',501,'SZX','2025-06-10 10:00:00','CTU','2025-06-10 12:30:00',220,'Scheduled',1);
+
+-- —— 八、票据 ticket & 购买 purchases ——
+INSERT INTO ticket (ticket_id, airline_name, flight_num) VALUES
+  (1001,'Delta',1001),
+  (1002,'Delta',1002),
+  (1003,'American Airlines',2001),
+  (1004,'Air China',101),
+  (1005,'China Eastern',201),
+  (1006,'China Southern',301),
+  (1007,'Hainan Airlines',401),
+  (1008,'Shenzhen Airlines',501);
+
+INSERT INTO purchases (ticket_id, customer_email, booking_agent_id, purchase_date) VALUES
+  -- 直购
+  (1001,'custA@example.com',   NULL,    '2025-05-01'),
+  (1004,'custCH1@example.com', NULL,    '2025-05-02'),
+  (1007,'custB@example.com',   NULL,    '2025-05-03'),
+  -- 代理购
+  (1002,'custB@example.com',   201,     '2025-05-04'),  -- agentA 代购 Delta
+  (1003,'custC@example.com',   NULL,    '2025-05-05'),  -- 也可直购
+  (1005,'custCH2@example.com', 204,     '2025-05-06'),  -- agentCH1 代购 China Eastern
+  (1006,'custA@example.com',   205,     '2025-05-07'),  -- agentCH2 代购 China Southern
+  (1008,'custC@example.com',   NULL,    '2025-05-08');

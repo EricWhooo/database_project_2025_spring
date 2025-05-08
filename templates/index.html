@@ -1,26 +1,33 @@
-<!-- File: templates/index.html -->
 {% extends 'base.html' %}
+{% set hide_back = true %}
 {% block content %}
-<h1>Welcome to the Online Air Ticket Reservation System</h1>
-<a href="{{ url_for('auth.login') }}">Login</a> |
-<a href="{{ url_for('auth.register', user_type='customer') }}">Customer Register</a> |
-<a href="{{ url_for('auth.register', user_type='agent') }}">Agent Register</a> |
-<a href="{{ url_for('auth.register', user_type='staff') }}">Staff Register</a>
-<hr>
-<h2>Search Flights</h2>
-<form method="post" action="{{ url_for('public.search_flights') }}">
-  <div class="form-group">
-    <label>Departure City or Airport</label>
-    <input type="text" name="source" class="form-control" required>
+
+<!-- 顶部毛玻璃欢迎条 -->
+<div class="glass-shell text-center mb-5">
+  <h1 class="fst-italic fw-bold display-4 text-primary">Welcome to ATRS!</h1>
+</div>
+
+<h1 class="fw-bold mb-4">Search Flights</h1>
+
+<form class="row g-4 needs-validation" action="{{ url_for('public.search_flights') }}" method="post" novalidate>
+  <div class="col-md-6">
+    <label class="form-label">Departure Airport</label>
+    <input id="input-source" name="source" class="form-control" placeholder="e.g. JFK" required>
   </div>
-  <div class="form-group">
-    <label>Destination City or Airport</label>
-    <input type="text" name="destination" class="form-control" required>
+  <div class="col-md-6">
+    <label class="form-label">Destination Airport</label>
+    <input id="input-dest" name="destination" class="form-control" placeholder="e.g. LAX" required>
   </div>
-  <div class="form-group">
-    <label>Departure Date (YYYY-MM-DD)</label>
-    <input type="text" name="date" class="form-control" required>
+  <div class="col-12 text-end">
+    <button class="btn btn-primary px-5" type="submit">Search</button>
   </div>
-  <button class="btn btn-primary" type="submit">Search</button>
 </form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  attachTypeahead('#input-source');
+  attachTypeahead('#input-dest');
+</script>
 {% endblock %}
