@@ -68,8 +68,6 @@ def my_flights():
             cur.execute("""
                 SELECT * FROM flight
                 WHERE airline_name=%s
-                  AND departure_time>=NOW()
-                  AND departure_time<=DATE_ADD(NOW(),INTERVAL 30 DAY)
             """, (airline,))
             flights = cur.fetchall()
     finally:
