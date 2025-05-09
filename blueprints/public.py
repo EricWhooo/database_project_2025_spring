@@ -36,7 +36,7 @@ def search_flights():
             src_codes  = resolve_airports(src_input)
             dest_codes = resolve_airports(dest_input)
             if not src_codes or not dest_codes:
-                flash("找不到对应的机场或城市，请检查后重试。", "warning")
+                flash("Unable to find the corresponding airport or city. Please check and try again.", "warning")
                 return redirect(request.referrer or url_for('public.index'))
 
             ps_src  = ",".join(["%s"] * len(src_codes))
