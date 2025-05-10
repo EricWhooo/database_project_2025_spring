@@ -1,77 +1,79 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2 class="mb-4">Flights {{ source }} → {{ dest }}</h2>
+<div class="text-white"></div>
+  <h2 class="mb-4">Flights {{ source }} → {{ dest }}</h2>
 
-<!-- 航线动画 -->
-<svg width="100%" height="140" viewBox="0 0 600 140" class="mb-4">
-  <defs>
-    <!-- 飞机形状 -->
-    <path id="planeShape" d="M0,-6 L12,0 L0,6 L4,0 Z" fill="#0d6efd"/>
-    <!-- 箭头标记 -->
-    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="10" refY="0" orient="auto">
-      <path d="M0,-5 L10,0 L0,5 Z" fill="#0d6efd"/>
-    </marker>
-  </defs>
+  <!-- 航线动画 -->
+  <svg width="100%" height="140" viewBox="0 0 600 140" class="mb-4">
+    <defs>
+      <!-- 飞机形状 -->
+      <path id="planeShape" d="M0,-6 L12,0 L0,6 L4,0 Z" fill="white"/>
+      <!-- 箭头标记 -->
+      <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="10" refY="0" orient="auto">
+        <path d="M0,-5 L10,0 L0,5 Z" fill="white"/>
+      </marker>
+    </defs>
 
-  <!-- 曲线路径 -->
-  <path id="routePath"
-        d="M60 70 Q300 20 540 70"
-        fill="none"
-        stroke="#0d6efd"
-        stroke-width="3"
-        marker-end="url(#arrowHead)"
-        stroke-dasharray="600"
-        stroke-dashoffset="600">
-    <animate attributeName="stroke-dashoffset"
-             from="600" to="0"
-             dur="1.5s"
-             fill="freeze" />
-  </path>
+    <!-- 曲线路径 -->
+    <path id="routePath"
+          d="M60 70 Q300 20 540 70"
+          fill="none"
+          stroke="white"
+          stroke-width="3"
+          marker-end="url(#arrowHead)"
+          stroke-dasharray="600"
+          stroke-dashoffset="600">
+      <animate attributeName="stroke-dashoffset"
+              from="600" to="0"
+              dur="1.5s"
+              fill="freeze" />
+    </path>
 
-  <!-- 飞机沿路径飞行 -->
-  <use href="#planeShape" id="plane">
-    <animateMotion dur="1.5s" begin="0.2s" rotate="auto" fill="freeze">
-      <mpath href="#routePath"/>
-    </animateMotion>
-  </use>
+    <!-- 飞机沿路径飞行 -->
+    <use href="#planeShape" id="plane">
+      <animateMotion dur="1.5s" begin="0.2s" rotate="auto" fill="freeze">
+        <mpath href="#routePath"/>
+      </animateMotion>
+    </use>
 
-  <!-- 出发/到达机场标注 -->
-  <text x="60" y="110" text-anchor="middle" font-size="26" fill="#333333" font-weight="bold">
-    {{ source }}
-  </text>
-  <text x="540" y="110" text-anchor="middle" font-size="26" fill="#333333" font-weight="bold">
-    {{ dest }}
-  </text>
-</svg>
+    <!-- 出发/到达机场标注 -->
+    <text x="60" y="110" text-anchor="middle" font-size="26" fill="#333333" font-weight="bold">
+      {{ source }}
+    </text>
+    <text x="540" y="110" text-anchor="middle" font-size="26" fill="#333333" font-weight="bold">
+      {{ dest }}
+    </text>
+  </svg>
 
-{% if flights %}
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>Flight #</th><th>Airline</th><th>Depart Time</th>
-          <th>Arrive Time</th><th>Price</th><th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for f in flights %}
-        <tr>
-          <td>{{ f.flight_num }}</td>
-          <td>{{ f.airline_name }}</td>
-          <td>{{ f.departure_time }}</td>
-          <td>{{ f.arrival_time }}</td>
-          <td>${{ f.price }}</td>
-          <td>
-            <span class="badge text-bg-{% if f.status=='Scheduled' %}info{% elif f.status=='Completed' %}success{% else %}secondary{% endif %}">
-              {{ f.status }}
-            </span>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-{% else %}
-  <p class="text-muted">No flights found.</p>
-{% endif %}
+  {% if flights %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Flight #</th><th>Airline</th><th>Depart Time</th>
+            <th>Arrive Time</th><th>Price</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in flights %}
+          <tr>
+            <td>{{ f.flight_num }}</td>
+            <td>{{ f.airline_name }}</td>
+            <td>{{ f.departure_time }}</td>
+            <td>{{ f.arrival_time }}</td>
+            <td>${{ f.price }}</td>
+            <td>
+              <span class="badge text-bg-{% if f.status=='Scheduled' %}info{% elif f.status=='Completed' %}success{% else %}secondary{% endif %}">
+                {{ f.status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">No flights found.</p>
+  {% endif %}
+</div>
 {% endblock %}

@@ -4,10 +4,10 @@
 <h2 class="mb-4">Booking Agent Dashboard</h2>
 
 <div class="row row-cols-2 row-cols-md-3 g-4">
-  {{ card_item(url_for('agent.my_flights'),        'airplane',   'My Flights') }}
-  {{ card_item(url_for('agent.purchase_ticket'),   'cart-plus',  'Agent Purchase','success') }}
-  {{ card_item(url_for('agent.view_commission'),   'cash-stack', 'Commission','warning') }}
-  {{ card_item(url_for('agent.view_top_customers'),'people',     'Top Customers','info') }}
-  {{ card_item(url_for('auth.logout'),             'box-arrow-right','Logout','secondary') }}
+  {{ card_item(url_for('agent.my_flights'),        'airplane',   'My Flights',         'dark') }}
+  {{ card_item(url_for('agent.purchase_ticket'),   'cart-plus',  'Agent Purchase',     'dark') }}
+  {{ card_item(url_for('agent.view_commission'),   'cash-stack', 'Commission',         'dark') }}
+  {{ card_item(url_for('agent.view_top_customers'),'people',     'Top Customers',      'dark') }}
+  {{ card_item(url_for('auth.logout'),             'box-arrow-right','Logout',         'dark') }}
 </div>
 {% endblock %}

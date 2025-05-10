@@ -4,21 +4,21 @@
 <h2 class="mb-4">Airline Staff Dashboard</h2>
 
 <div class="row row-cols-2 row-cols-md-4 g-4">
-  {{ card_item(url_for('staff.my_flights'),           'airplane',       'My Flights') }}
-  {{ card_item(url_for('staff.create_flight'),        'plus-circle',    'Create Flight','success') }}
-  {{ card_item(url_for('staff.change_status'),        'pencil-square',  'Change Status','warning') }}
-  {{ card_item(url_for('staff.add_airplane'),         'truck',          'Add Airplane','info') }}
-  {{ card_item(url_for('staff.add_airport'),          'pin-map',        'Add Airport','info') }}
-  {{ card_item(url_for('staff.view_agents'),          'person-badge',   'Agents','secondary') }}
-  {{ card_item(url_for('staff.view_frequent_customers'),'award',        'Frequent Cust.','secondary') }}
-  {{ card_item(url_for('staff.view_reports'),         'bar-chart',      'Reports','danger') }}
-  {{ card_item(url_for('staff.compare_revenue'),      'pie-chart',      'Revenue','danger') }}
-  {{ card_item(url_for('staff.view_top_destinations'),'geo-alt',        'Top Dests','primary') }}
-  {{ card_item(url_for('staff.grant_permission'),     'unlock',         'Grant Perm','warning') }}
-  {{ card_item(url_for('staff.add_booking_agent'),    'person-plus',    'Add Agent','success') }}
-  {{ card_item(url_for('staff.view_passengers'),      'people-fill',    'Passengers','info') }}
-  {{ card_item(url_for('staff.customer_flights'),     'journal-text',   'Customer Flights','info') }}
-  {{ card_item(url_for('staff.status_summary'),       'graph-up',       'Status Summary','warning') }}
-  {{ card_item(url_for('auth.logout'),                'box-arrow-right','Logout','secondary') }}
+  {{ card_item(url_for('staff.my_flights'),           'airplane',       'My Flights',         'dark') }}
+  {{ card_item(url_for('staff.create_flight'),        'plus-circle',    'Create Flight',      'dark') }}
+  {{ card_item(url_for('staff.change_status'),        'pencil-square',  'Change Status',      'dark') }}
+  {{ card_item(url_for('staff.add_airplane'),         'truck',          'Add Airplane',       'dark') }}
+  {{ card_item(url_for('staff.add_airport'),          'pin-map',        'Add Airport',        'dark') }}
+  {{ card_item(url_for('staff.view_agents'),          'person-badge',   'Agents',             'dark') }}
+  {{ card_item(url_for('staff.view_frequent_customers'),'award',        'Frequent Cust.',     'dark') }}
+  {{ card_item(url_for('staff.view_reports'),         'bar-chart',      'Reports',            'dark') }}
+  {{ card_item(url_for('staff.compare_revenue'),      'pie-chart',      'Revenue',            'dark') }}
+  {{ card_item(url_for('staff.view_top_destinations'),'geo-alt',        'Top Dests',          'dark') }}
+  {{ card_item(url_for('staff.grant_permission'),     'unlock',         'Grant Perm',         'dark') }}
+  {{ card_item(url_for('staff.add_booking_agent'),    'person-plus',    'Add Agent',          'dark') }}
+  {{ card_item(url_for('staff.view_passengers'),      'people-fill',    'Passengers',         'dark') }}
+  {{ card_item(url_for('staff.customer_flights'),     'journal-text',   'Customer Flights',   'dark') }}
+  {{ card_item(url_for('staff.status_summary'),       'graph-up',       'Status Summary',     'dark') }}
+  {{ card_item(url_for('auth.logout'),                'box-arrow-right','Logout',             'dark') }}
 </div>
 {% endblock %}

@@ -12,12 +12,13 @@
   
   /* universal glass wrapper */
   .glass-shell{
-    backdrop-filter:blur(15px) saturate(160%);
+    backdrop-filter:blur(10px) saturate(160%);
     background:var(--atrs-glass-bg);
     border-radius:24px;
-    border:1px solid rgba(255,255,255,.35);
+    border:1px solid rgba(255,255,255,.40);
     padding:2.5rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    color: white;
   }
   
   /* cards inside dashboard */
@@ -49,3 +50,43 @@
   .table-container .table {
     margin-bottom: 0; /* 去掉表格底部多余空隙 */
   }
+
+
+/* 只对表单 label 和页面主标题使用白字，不影响 dashboard 卡片 */
+.glass-shell label,
+
+.glass-shell > h2 {
+  color: white !important;
+}
+
+/* ===== 全局按钮样式：统一为 #001f43 半透明深蓝 ===== */
+.btn-primary,
+.btn-dark,
+.btn {
+  background-color: rgba(0, 31, 67, 0.8) !important;
+  border-color: rgba(0, 31, 67, 0.8) !important;
+  color: white !important;
+}
+
+.btn:hover,
+.btn-primary:hover,
+.btn-dark:hover {
+  background-color: rgba(0, 31, 67, 1) !important;
+  border-color: rgba(0, 31, 67, 1) !important;
+  color: white !important;
+}
+
+/* ===== 所有链接统一为深蓝色 ===== */
+a {
+  color: #001f43 !important;
+  text-decoration: none;
+}
+a:hover {
+  color: #003366 !important;
+  text-decoration: underline;
+}
+
+.text-deepblue {
+  color: rgba(0, 31, 67, 0.85) !important;
+}
+

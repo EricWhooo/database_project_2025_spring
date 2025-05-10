@@ -1,12 +1,13 @@
+
 {% extends 'base.html' %}
 {% from '_dashboard_macros.html' import card_item %}
 {% block content %}
 <h2 class="mb-4">Customer Dashboard</h2>
 
 <div class="row row-cols-2 row-cols-md-3 g-4">
-  {{ card_item(url_for('customer.my_flights'),        'airplane',   'My Flights') }}
-  {{ card_item(url_for('customer.purchase_ticket'),   'cart',       'Purchase Ticket','success') }}
-  {{ card_item(url_for('customer.track_spending'),    'graph-up',   'Track Spending','warning') }}
-  {{ card_item(url_for('auth.logout'),                'box-arrow-right','Logout','secondary') }}
+  {{ card_item(url_for('customer.my_flights'),        'airplane',   'My Flights',         'dark') }}
+  {{ card_item(url_for('customer.purchase_ticket'),   'cart',       'Purchase Ticket',    'dark') }}
+  {{ card_item(url_for('customer.track_spending'),    'graph-up',   'Track Spending',     'dark') }}
+  {{ card_item(url_for('auth.logout'),                'box-arrow-right','Logout',         'dark') }}
 </div>
 {% endblock %}
